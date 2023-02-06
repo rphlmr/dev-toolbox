@@ -78,7 +78,7 @@ export class AppError extends Error {
     traceId,
   }: FailureReason) {
     super();
-    this.name = "SupaStripeStackError 👀";
+    this.name = "AppError 👀";
     this.message = message;
     this.cause = cause;
     this.metadata = metadata;

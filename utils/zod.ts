@@ -15,6 +15,22 @@ export function createFormIssues(
   }));
 }
 
+function sanitizeSensitiveData(data: unknown) {
+  if (!data || typeof data !== "object") return data;
+
+  let sanitizedData = data;
+
+  if ("password" in data) {
+    sanitizedData = { ...sanitizedData, password: "🤫" };
+  }
+
+  if ("confirmPassword" in data) {
+    sanitizedData = { ...sanitizedData, confirmPassword: "🤫" };
+  }
+
+  return sanitizedData;
+}
+
 export async function parseData<T extends z.ZodTypeAny>(
   data: unknown,
   schema: T,
@@ -27,7 +43,7 @@ export async function parseData<T extends z.ZodTypeAny>(
 
     return failure({
       message,
-      metadata: { issues, data },
+      metadata: { issues, data: sanitizeSensitiveData(data) },
       tag: "Payload validation 👾",
     });
   }
