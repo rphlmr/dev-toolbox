@@ -1,7 +1,7 @@
 {
   "name": "dev-toolbox",
   "version": "1.0.0",
-  "description": "Utils",
+  "description": "A collection of my custom utils (Remix, React, Zod,...)",
   "scripts": {},
   "author": "rphlmr",
   "license": "MIT",
