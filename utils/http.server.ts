@@ -2,7 +2,6 @@ import { createId } from "@paralleldrive/cuid2";
 import type { ResponseInit } from "@remix-run/node";
 import { redirect, json } from "@remix-run/node";
 
-import { Logger } from "./logger";
 import { failure, FailureReason, success } from "./resolvers";
 
 export function getCurrentPath(request: Request) {
