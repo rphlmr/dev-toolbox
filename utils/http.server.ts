@@ -126,6 +126,39 @@ export const response = {
       }
     );
   },
+  notFound: (reason: FailureReason, options: ResponseOptions) => {
+    Logger.error(reason);
+
+    return json(
+      { data: null, error: makePublicError(reason) },
+      {
+        ...makeOptions(options),
+        status: 404,
+      }
+    );
+  },
+  unauthorized: (reason: FailureReason, options: ResponseOptions) => {
+    Logger.error(reason);
+
+    return json(
+      { data: null, error: makePublicError(reason) },
+      {
+        ...makeOptions(options),
+        status: 401,
+      }
+    );
+  },
+  notAllowedMethod: (reason: FailureReason, options: ResponseOptions) => {
+    Logger.error(reason);
+
+    return json(
+      { data: null, error: makePublicError(reason) },
+      {
+        ...makeOptions(options),
+        status: 405,
+      }
+    );
+  },
   redirect: (url: string, options: ResponseOptions) =>
     redirect(url, {
       ...makeOptions(options),
