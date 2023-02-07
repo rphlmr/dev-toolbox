@@ -88,6 +88,22 @@ function makePublicError({ message, metadata, traceId }: FailureReason) {
   return { message, metadata, traceId };
 }
 
+function errorResponse(
+  status: number,
+  reason: FailureReason,
+  options: ResponseOptions
+) {
+  Logger.error(reason);
+
+  return json(
+    { data: null, error: makePublicError(reason) },
+    {
+      ...makeOptions(options),
+      status,
+    }
+  );
+}
+
 /**
  * This is a tiny helper to normalize `json` responses.
  *
@@ -104,61 +120,16 @@ export const response = {
         status: 200,
       }
     ),
-  serverError: (reason: FailureReason, options: ResponseOptions) => {
-    Logger.error(reason);
-
-    return json(
-      { data: null, error: makePublicError(reason) },
-      {
-        ...makeOptions(options),
-        status: 500,
-      }
-    );
-  },
-  badRequest: (reason: FailureReason, options: ResponseOptions) => {
-    Logger.error(reason);
-
-    return json(
-      { data: null, error: makePublicError(reason) },
-      {
-        ...makeOptions(options),
-        status: 400,
-      }
-    );
-  },
-  notFound: (reason: FailureReason, options: ResponseOptions) => {
-    Logger.error(reason);
-
-    return json(
-      { data: null, error: makePublicError(reason) },
-      {
-        ...makeOptions(options),
-        status: 404,
-      }
-    );
-  },
-  unauthorized: (reason: FailureReason, options: ResponseOptions) => {
-    Logger.error(reason);
-
-    return json(
-      { data: null, error: makePublicError(reason) },
-      {
-        ...makeOptions(options),
-        status: 401,
-      }
-    );
-  },
-  notAllowedMethod: (reason: FailureReason, options: ResponseOptions) => {
-    Logger.error(reason);
-
-    return json(
-      { data: null, error: makePublicError(reason) },
-      {
-        ...makeOptions(options),
-        status: 405,
-      }
-    );
-  },
+  serverError: (reason: FailureReason, options: ResponseOptions) =>
+    errorResponse(500, reason, options),
+  badRequest: (reason: FailureReason, options: ResponseOptions) =>
+    errorResponse(400, reason, options),
+  notFound: (reason: FailureReason, options: ResponseOptions) =>
+    errorResponse(404, reason, options),
+  unauthorized: (reason: FailureReason, options: ResponseOptions) =>
+    errorResponse(401, reason, options),
+  notAllowedMethod: (reason: FailureReason, options: ResponseOptions) =>
+    errorResponse(405, reason, options),
   redirect: (url: string, options: ResponseOptions) =>
     redirect(url, {
       ...makeOptions(options),
