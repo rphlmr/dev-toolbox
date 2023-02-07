@@ -1,4 +1,5 @@
 import { createId } from "@paralleldrive/cuid2";
+import { Logger } from "./logger";
 
 /**
  * The goal of these resolvers is to normalize the return type of our functions and force us to handle errors.
@@ -74,7 +75,7 @@ export class AppError extends Error {
     message,
     cause = null,
     metadata,
-    tag = "untagged 🤷‍♂️",
+    tag = "untagged 🐞",
     traceId,
   }: FailureReason) {
     super();
@@ -84,5 +85,7 @@ export class AppError extends Error {
     this.metadata = metadata;
     this.tag = tag;
     this.traceId = traceId || createId();
+
+    Logger.error(this);
   }
 }

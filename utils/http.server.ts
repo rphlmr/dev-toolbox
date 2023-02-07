@@ -1,3 +1,4 @@
+import { createId } from "@paralleldrive/cuid2";
 import type { ResponseInit } from "@remix-run/node";
 import { redirect, json } from "@remix-run/node";
 
@@ -85,7 +86,7 @@ export type SessionWithCookie<T = unknown> = T & {
 type ResponseOptions = ResponseInit & { authSession: SessionWithCookie | null };
 
 function makePublicError({ message, metadata, traceId }: FailureReason) {
-  return { message, metadata, traceId };
+  return { message, metadata, traceId: traceId || createId() };
 }
 
 function errorResponse(
@@ -93,8 +94,6 @@ function errorResponse(
   reason: FailureReason,
   options: ResponseOptions
 ) {
-  Logger.error(reason);
-
   return json(
     { data: null, error: makePublicError(reason) },
     {

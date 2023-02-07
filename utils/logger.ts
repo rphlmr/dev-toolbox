@@ -1,4 +1,9 @@
-/* eslint-disable no-console */
+import pino from "pino";
+
+const logger = pino({
+  level: "debug",
+});
+
 /**
  * A simple logger abstraction that can be used to log messages in the console.
  *
@@ -7,19 +12,24 @@
 export class Logger {
   static dev(...args: any[]) {
     if (process.env.NODE_ENV === "development") {
-      console.debug(...args);
+      logger.debug(args);
+    }
+  }
+  static devError(...args: any[]) {
+    if (process.env.NODE_ENV === "development") {
+      logger.error(args);
     }
   }
   static log(...args: any[]) {
-    console.log(...args);
+    logger.info(args);
   }
   static warn(...args: any[]) {
-    console.warn(...args);
+    logger.warn(args);
   }
   static info(...args: any[]) {
-    console.info(...args);
+    logger.info(args);
   }
-  static error(error: unknown, ...args: unknown[]) {
-    console.error(JSON.stringify(error, null, 2), ...args);
+  static error(...args: any[]) {
+    logger.error(args);
   }
 }
