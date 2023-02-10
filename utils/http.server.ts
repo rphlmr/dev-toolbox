@@ -1,8 +1,8 @@
 import { createId } from "@paralleldrive/cuid2";
-import type { ResponseInit } from "@remix-run/node";
+import { defer, ResponseInit } from "@remix-run/node";
 import { redirect, json } from "@remix-run/node";
 
-import { failure, FailureReason, success } from "./resolvers";
+import { AppError, failure, FailureReason, success } from "./resolvers";
 
 export function getCurrentPath(request: Request) {
   return new URL(request.url).pathname;
@@ -84,22 +84,27 @@ export type SessionWithCookie<T = unknown> = T & {
 
 type ResponseOptions = ResponseInit & { authSession: SessionWithCookie | null };
 
-function makePublicError({ message, metadata, traceId }: FailureReason) {
-  return { message, metadata, traceId: traceId || createId() };
+type ResponsePayload = Record<string, unknown>;
+
+function makeReason(cause: unknown) {
+  if (cause instanceof AppError) {
+    return cause;
+  }
+
+  return new AppError({
+    cause,
+    message: "Sorry, something went wrong for an unknown reason.",
+  });
 }
 
-function errorResponse(
-  status: number,
-  reason: FailureReason,
-  options: ResponseOptions
-) {
-  return json(
-    { data: null, error: makePublicError(reason) },
-    {
-      ...makeOptions(options),
-      status,
-    }
-  );
+export type CatchResponse = ReturnType<typeof makeErrorPayload>;
+
+function makeErrorPayload({ message, metadata, traceId }: AppError) {
+  return { error: { message, metadata, traceId } };
+}
+
+function makeOkPayload<T extends ResponsePayload>(data: T) {
+  return { error: null, ...data };
 }
 
 /**
@@ -110,26 +115,40 @@ function errorResponse(
  * It can be cumbersome to type, but it's worth it to avoid forgetting to handle authSession.
  */
 export const response = {
-  ok: <T>(data: T, options: ResponseOptions) =>
-    json(
-      { data, error: null },
-      {
-        ...makeOptions(options),
-        status: 200,
-      }
-    ),
-  serverError: (reason: FailureReason, options: ResponseOptions) =>
-    errorResponse(500, reason, options),
-  badRequest: (reason: FailureReason, options: ResponseOptions) =>
-    errorResponse(400, reason, options),
-  notFound: (reason: FailureReason, options: ResponseOptions) =>
-    errorResponse(404, reason, options),
-  unauthorized: (reason: FailureReason, options: ResponseOptions) =>
-    errorResponse(401, reason, options),
-  notAllowedMethod: (reason: FailureReason, options: ResponseOptions) =>
-    errorResponse(405, reason, options),
+  ok: <T extends ResponsePayload>(data: T, options: ResponseOptions) =>
+    json(makeOkPayload(data), makeOptions({ status: 200, ...options })),
+  /**
+   * When we want to return or throw an error response. Works with `response.ok` and `response.defer`
+   *
+   * **With `response.defer`, use it only in the case you want to throw an error response.**
+   */
+  error: (cause: unknown, options: ResponseOptions) => {
+    const reason = makeReason(cause);
+
+    return json(
+      makeErrorPayload(reason),
+      makeOptions({ status: reason.status, ...options })
+    );
+  },
+  defer: <T extends ResponsePayload>(data: T, options: ResponseOptions) =>
+    defer(makeOkPayload(data), makeOptions({ status: 200, ...options })),
+  /**
+   * When we want to return a deferred error response.
+   *
+   * Works only with `response.defer`.
+   *
+   * It should only be used when we want to **return a deferred response.**
+   *
+   * **Could not be thrown.** If you want to throw an error response, use `response.error` instead.
+   */
+  deferError: (cause: unknown, options: ResponseOptions) => {
+    const reason = makeReason(cause);
+
+    return defer(
+      makeErrorPayload(reason),
+      makeOptions({ status: reason.status, ...options })
+    );
+  },
   redirect: (url: string, options: ResponseOptions) =>
-    redirect(url, {
-      ...makeOptions(options),
-    }),
+    redirect(url, makeOptions(options)),
 };

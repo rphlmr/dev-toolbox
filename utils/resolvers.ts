@@ -34,10 +34,27 @@ export type Failure = {
   error: AppError;
 };
 
+type HTTPStatusCode = 400 | 401 | 404 | 404 | 405 | 500;
+type HTTPStatusText =
+  | "bad_request"
+  | "unauthorized"
+  | "not_found"
+  | "method_not_allowed"
+  | "server_error";
+
+const HTTPStatus = {
+  bad_request: 400,
+  unauthorized: 401,
+  not_found: 404,
+  method_not_allowed: 405,
+  server_error: 500,
+} satisfies Record<HTTPStatusText, HTTPStatusCode>;
+
 /**
  * @param message The message intended for the user.
  *
  * Other params are for logging purposes and help us debug.
+ * @param status The HTTP status code text.
  * @param cause The error that caused the rejection.
  * @param metadata Additional data to help us debug.
  * @param tag A tag to help us debug and filter logs.
@@ -45,6 +62,7 @@ export type Failure = {
  */
 export type FailureReason = {
   message: string;
+  status?: HTTPStatusText;
   cause?: unknown;
   metadata?: Record<string, unknown>;
   tag?: string;
@@ -66,9 +84,10 @@ export function failure(reason: FailureReason): Failure {
  * A custom error class to normalize the error handling in our app.
  */
 export class AppError extends Error {
-  cause: FailureReason["cause"];
-  metadata: FailureReason["metadata"];
-  tag: FailureReason["tag"];
+  readonly cause: FailureReason["cause"];
+  readonly metadata: FailureReason["metadata"];
+  readonly tag: FailureReason["tag"];
+  readonly status: HTTPStatusCode;
   traceId: FailureReason["traceId"];
 
   constructor({
@@ -77,13 +96,15 @@ export class AppError extends Error {
     metadata,
     tag = "untagged 🐞",
     traceId,
+    status = "server_error",
   }: FailureReason) {
     super();
-    this.name = "AppError 👀";
+    this.name = "SupaStripeStackError 👀";
     this.message = message;
     this.cause = cause;
     this.metadata = metadata;
     this.tag = tag;
+    this.status = HTTPStatus[status];
     this.traceId = traceId || createId();
 
     Logger.error(this);
