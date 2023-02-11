@@ -1,4 +1,4 @@
-import { AppError } from "./resolvers";
+import { AppError } from "./error";
 
 export function isEmpty(
   value:

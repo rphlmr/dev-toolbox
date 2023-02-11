@@ -1,6 +1,6 @@
 import { useLocation } from "@remix-run/react";
 
-import { isEmpty } from "~/utils";
+import { isEmpty } from "~/utils/is-empty";
 
 export function useGetRootPath() {
   const location = useLocation();
