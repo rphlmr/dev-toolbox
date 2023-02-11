@@ -2,7 +2,9 @@ import { createId } from "@paralleldrive/cuid2";
 import { defer, ResponseInit } from "@remix-run/node";
 import { redirect, json } from "@remix-run/node";
 
-import { AppError, failure, FailureReason, success } from "./resolvers";
+import { AppError, FailureReason } from "./error";
+import { HTTPStatusCode } from "./http-status";
+import { Logger } from "./logger";
 
 export function getCurrentPath(request: Request) {
   return new URL(request.url).pathname;
@@ -14,35 +16,6 @@ export function makeRedirectToFromHere(request: Request) {
 
 export function getParentPath(request: Request) {
   return getCurrentPath(request).split("/").slice(0, -1).join("/") || "/";
-}
-
-export function getRequiredFormDataValue(formData: FormData, key: string) {
-  const value = formData.get(key);
-
-  if (!value) {
-    return failure({
-      message: `Missing required form data`,
-      metadata: { key },
-    });
-  }
-
-  return success(value);
-}
-
-export function getRequiredParam(
-  params: Record<string, string | undefined>,
-  key: string
-) {
-  const value = params[key];
-
-  if (!value) {
-    return failure({
-      message: `Missing required param`,
-      metadata: { key },
-    });
-  }
-
-  return success(value);
 }
 
 /**
@@ -68,6 +41,11 @@ export function safeRedirect(
   return to;
 }
 
+type ResponseOptions = ResponseInit & {
+  authSession: SessionWithCookie | null;
+  status?: HTTPStatusCode;
+};
+
 function makeOptions({ authSession, ...options }: ResponseOptions) {
   const headers = new Headers(options.headers);
 
@@ -77,12 +55,9 @@ function makeOptions({ authSession, ...options }: ResponseOptions) {
 
   return { ...options, headers };
 }
-
 export type SessionWithCookie<T = unknown> = T & {
   cookie: string;
 };
-
-type ResponseOptions = ResponseInit & { authSession: SessionWithCookie | null };
 
 type ResponsePayload = Record<string, unknown>;
 
@@ -93,7 +68,7 @@ function makeReason(cause: unknown) {
 
   return new AppError({
     cause,
-    message: "Sorry, something went wrong for an unknown reason.",
+    message: "Sorry, something went wrong.",
   });
 }
 
@@ -125,6 +100,8 @@ export const response = {
   error: (cause: unknown, options: ResponseOptions) => {
     const reason = makeReason(cause);
 
+    Logger.error(reason);
+
     return json(
       makeErrorPayload(reason),
       makeOptions({ status: reason.status, ...options })
@@ -143,6 +120,8 @@ export const response = {
    */
   deferError: (cause: unknown, options: ResponseOptions) => {
     const reason = makeReason(cause);
+
+    Logger.error(reason);
 
     return defer(
       makeErrorPayload(reason),

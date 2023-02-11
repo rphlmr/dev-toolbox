@@ -1,3 +1,5 @@
+// @ts-nocheck wanted no check here
+
 import { parsePhoneNumber } from "./phone-number";
 
 describe(parsePhoneNumber.name, () => {

@@ -2,7 +2,9 @@
   "name": "dev-toolbox",
   "version": "1.0.0",
   "description": "A collection of my custom utils (Remix, React, Zod,...)",
-  "scripts": {},
+  "scripts": {
+    "typecheck": "tsc -b"
+  },
   "author": "rphlmr",
   "license": "MIT",
   "prettier": {},
