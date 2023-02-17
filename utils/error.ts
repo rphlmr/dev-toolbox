@@ -47,10 +47,14 @@ export class AppError extends Error {
     super();
     this.name = "AppError 👀";
     this.message = message;
-    this.status = status;
+    this.status = isAppError(cause) ? cause.status : status;
     this.cause = cause;
     this.metadata = metadata;
     this.tag = tag;
     this.traceId = traceId || createId();
   }
+}
+
+function isAppError(cause: unknown): cause is AppError {
+  return cause instanceof AppError;
 }
