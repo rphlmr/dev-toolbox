@@ -12,7 +12,7 @@
   "settings": {
     // Help eslint-plugin-tailwindcss to parse Tailwind classes outside of className
     "tailwindcss": {
-      "callees": ["tw"]
+      "callees": ["tw", "cva"]
     },
     "jest": {
       "version": 27
@@ -25,7 +25,7 @@
     "tailwindcss/no-custom-classname": [
       "warn",
       {
-        "callees": ["tw"]
+        "callees": ["tw", "cva"]
         // "whitelist": ["data\\-[.*?\\]:.*?"]
       }
     ],
