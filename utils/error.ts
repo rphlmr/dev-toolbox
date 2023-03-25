@@ -6,7 +6,7 @@ import type { HTTPStatusCode } from "./http-status";
  * The goal of this custom error class is to normalize our errors.
  */
 
-export type ErrorTag = "untagged 🐞" | "Payload validation 👾";
+export type ErrorTag = "untagged 🐞" | "Payload validation 👾" | "Dev error 🤦‍♂️";
 
 /**
  * @param message The message intended for the user.

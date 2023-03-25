@@ -1,6 +1,9 @@
 import { z, ZodCustomIssue, ZodIssue } from "zod";
 import { AppError } from "./error";
-import { CountryCode, parsePhoneNumber } from "./phone-number";
+import {
+  isPossiblePhoneNumber,
+  parsePhoneNumber,
+} from "react-phone-number-input/input-mobile";
 
 type ZodCustomIssueWithMessage = ZodCustomIssue & { message: string };
 
@@ -103,57 +106,38 @@ export function switchField() {
   return z.preprocess((arg) => arg === "on", z.boolean());
 }
 
-export type PhoneNumberPayload = { value: string; countryCode: string };
-
 export function phoneNumberField(options?: {
   mobileOnly?: boolean;
   optional?: boolean;
 }) {
-  return z
-    .object({
-      countryCode: z.string().trim().min(2),
-      value: z.string().trim(),
-    })
-    .superRefine((val, ctx) => {
-      const { isValid, validationError, value } = parsePhoneNumber(
-        val.value,
-        val.countryCode as CountryCode,
-        options
-      );
+  return z.string().superRefine((phoneNumber, ctx) => {
+    if (options?.optional && !phoneNumber) {
+      return phoneNumber;
+    }
 
-      if (options?.optional && !val.value) {
-        return val;
-      }
+    if (!phoneNumber) {
+      return ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Phone number is required",
+      });
+    }
 
-      if (validationError === "empty-country-code") {
-        return ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: "Indiquez votre pays",
-        });
-      }
+    const parsed = parsePhoneNumber(phoneNumber);
 
-      if (validationError === "empty-phone-number") {
-        return ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: "Le numéro de téléphone est requis",
-        });
-      }
+    if (options?.mobileOnly && parsed?.getType() !== "MOBILE") {
+      return ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Phone number must be a mobile number",
+      });
+    }
 
-      if (validationError === "only-mobile-phone-number-allowed") {
-        return ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: "Le numéro doit être un numéro de mobile valide",
-        });
-      }
+    if (!isPossiblePhoneNumber(phoneNumber)) {
+      return ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Phone number is invalid",
+      });
+    }
 
-      if (!isValid) {
-        return ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: "Le numéro n'est pas valide",
-        });
-      }
-
-      val.value = value;
-      return val;
-    });
+    return phoneNumber;
+  });
 }
