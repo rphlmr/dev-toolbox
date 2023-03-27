@@ -1,6 +1,7 @@
 import { createId } from "@paralleldrive/cuid2";
-import { defer, ResponseInit } from "@remix-run/node";
+import { defer, ResponseInit, TypedResponse } from "@remix-run/node";
 import { redirect, json } from "@remix-run/node";
+import type { ValidationErrorResponseData } from "remix-validated-form";
 
 import { AppError, FailureReason } from "./error";
 import { HTTPStatusCode } from "./http-status";
@@ -72,7 +73,7 @@ function makeReason(cause: unknown) {
   });
 }
 
-export type CatchResponse = ReturnType<typeof makeErrorPayload>;
+export type CatchedResponse = ReturnType<typeof makeErrorPayload>;
 
 function makeErrorPayload({ message, metadata, traceId }: AppError) {
   return { error: { message, metadata, traceId } };
@@ -80,6 +81,33 @@ function makeErrorPayload({ message, metadata, traceId }: AppError) {
 
 function makeOkPayload<T extends ResponsePayload>(data: T) {
   return { error: null, ...data };
+}
+
+// https://www.remix-validated-form.io/reference/validation-error#validationError
+function isPayloadErrorResponse(cause: unknown): cause is Response {
+  return cause instanceof Response && cause.status === 422;
+}
+
+// In order to Remix Validate Form to work, we need to forward the error response.
+// https://www.remix-validated-form.io/reference/validation-error#validationError
+async function forwardPayloadErrorResponse(
+  response: Response,
+  options: ResponseOptions
+) {
+  Logger.error(
+    await response
+      .clone()
+      .text()
+      .catch(
+        () => "Forward payload error response. Unable to read Response error."
+      )
+  );
+
+  makeOptions(options).headers.forEach((value, key) =>
+    response.headers.append(key, value)
+  );
+
+  return response as TypedResponse<ValidationErrorResponseData>;
 }
 
 /**
@@ -98,6 +126,10 @@ export const response = {
    * **With `response.defer`, use it only in the case you want to throw an error response.**
    */
   error: (cause: unknown, options: ResponseOptions) => {
+    if (isPayloadErrorResponse(cause)) {
+      return forwardPayloadErrorResponse(cause, options);
+    }
+
     const reason = makeReason(cause);
 
     Logger.error(reason);
@@ -119,6 +151,10 @@ export const response = {
    * **Could not be thrown.** If you want to throw an error response, use `response.error` instead.
    */
   deferError: (cause: unknown, options: ResponseOptions) => {
+    if (isPayloadErrorResponse(cause)) {
+      return forwardPayloadErrorResponse(cause, options);
+    }
+
     const reason = makeReason(cause);
 
     Logger.error(reason);

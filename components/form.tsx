@@ -1,5 +1,6 @@
 import { forwardRef, useState } from "react";
 
+import { ExclamationCircleIcon } from "@heroicons/react/24/solid";
 import type { FetcherWithComponents } from "@remix-run/react";
 import { withZod } from "@remix-validated-form/with-zod";
 import type { VariantProps } from "class-variance-authority";
@@ -77,9 +78,7 @@ function Field({
 
       {children}
 
-      {!!error && (
-        <p className="text-[13px] text-black opacity-[0.8]">{error}</p>
-      )}
+      {!!error && <p className="mt-2 text-sm text-red-600">{error}</p>}
     </label>
   );
 }
@@ -104,7 +103,7 @@ const inputVariants = cva(
         true: "cursor-progress opacity-30",
       },
       error: {
-        true: "border-red-400",
+        true: "border-red-300 focus:border-red-500",
       },
     },
     defaultVariants: {
@@ -131,21 +130,32 @@ const BaseInput = forwardRef<HTMLInputElement, InputProps>(function BaseInput(
   const submitting = useIsSubmitting();
 
   return (
-    <input
-      id={id}
-      ref={ref}
-      readOnly={submitting}
-      className={tw(
-        inputVariants({
-          variant,
-          size,
-          submitting,
-          error: !!error,
-          className,
-        })
+    <div className="relative">
+      <input
+        id={id}
+        ref={ref}
+        readOnly={submitting}
+        className={tw(
+          inputVariants({
+            variant,
+            size,
+            submitting,
+            error: !!error,
+            className,
+          })
+        )}
+        {...rest}
+      />
+
+      {!!error && (
+        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+          <ExclamationCircleIcon
+            className="h-6 w-6 text-red-500"
+            aria-hidden="true"
+          />
+        </div>
       )}
-      {...rest}
-    />
+    </div>
   );
 });
 
@@ -195,7 +205,8 @@ function PhoneNumberInput(
           "bg-white",
           !isSubmitting && focus && "border-indigo-400",
           isSubmitting && " cursor-progress opacity-30 focus:border-gray-200",
-          error && "border-red-400"
+          !!error && "border-red-300",
+          !!error && focus && "border-red-500"
         )}
       >
         <div className="flex shrink-0 items-center space-x-2 pl-3">
@@ -220,6 +231,7 @@ function PhoneNumberInput(
           inputComponent={BaseInput}
           country="FR"
           onBlur={() => {
+            setFocus(false);
             validate();
           }}
         />
