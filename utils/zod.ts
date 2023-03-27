@@ -4,6 +4,9 @@ import {
   isPossiblePhoneNumber,
   parsePhoneNumber,
 } from "react-phone-number-input/input-mobile";
+import { GenericObject, validationError } from "remix-validated-form";
+import { withZod } from "@remix-validated-form/with-zod";
+import { zfd } from "zod-form-data";
 
 type ZodCustomIssueWithMessage = ZodCustomIssue & { message: string };
 
@@ -140,4 +143,17 @@ export function phoneNumberField(options?: {
 
     return phoneNumber;
   });
+}
+
+export async function validate<T extends z.ZodTypeAny>(
+  data: GenericObject,
+  schema: T
+) {
+  const result = await withZod(zfd.formData(schema)).validate(data);
+
+  if (result.error) {
+    throw validationError(result.error);
+  }
+
+  return result.data;
 }
