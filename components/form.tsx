@@ -68,9 +68,9 @@ function Field({
   children: React.ReactNode;
 }) {
   return (
-    <label htmlFor={name}>
+    <label htmlFor={name} className="space-y-2">
       {!!label && (
-        <span className="text-[15px] font-medium leading-[35px] text-black">
+        <span className="text-sm font-medium">
           {label}
           {required && <span className="text-gray-400">*</span>}
         </span>
@@ -78,29 +78,27 @@ function Field({
 
       {children}
 
-      {!!error && <p className="mt-2 text-sm text-red-600">{error}</p>}
+      {!!error && <p className="animate-show text-sm text-red-600">{error}</p>}
     </label>
   );
 }
 
 const inputVariants = cva(
   [
-    "flex w-full items-center overflow-hidden",
+    "flex w-full items-center overflow-hidden pr-10",
     "rounded-lg border-0 outline-none focus:outline-none focus:ring-transparent",
-    "bg-white text-base font-bold placeholder:text-gray-300",
+    "bg-white text-base font-bold text-gray-900 placeholder:text-gray-300",
+    "read-only:cursor-progress",
   ],
   {
     variants: {
       variant: {
         default:
-          "border-2 border-gray-200 focus:border-indigo-400 read-only:focus:border-gray-200",
+          "border-2 border-gray-200 read-only:opacity-30 focus:border-indigo-400 read-only:focus:border-gray-200",
       },
       size: {
         default: "h-10",
         small: "h-8",
-      },
-      submitting: {
-        true: "cursor-progress opacity-30",
       },
       error: {
         true: "border-red-300 focus:border-red-500",
@@ -139,7 +137,6 @@ const BaseInput = forwardRef<HTMLInputElement, InputProps>(function BaseInput(
           inputVariants({
             variant,
             size,
-            submitting,
             error: !!error,
             className,
           })
@@ -148,7 +145,7 @@ const BaseInput = forwardRef<HTMLInputElement, InputProps>(function BaseInput(
       />
 
       {!!error && (
-        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+        <div className="pointer-events-none absolute inset-y-0 right-0 flex animate-show items-center pr-2">
           <ExclamationCircleIcon
             className="h-6 w-6 text-red-500"
             aria-hidden="true"
